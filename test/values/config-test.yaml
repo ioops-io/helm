@@ -1,0 +1,26 @@
+replicaCount: 1
+
+image:
+  repository: curlimages/curl
+  tag: latest
+  pullPolicy: Always
+
+imagePullSecrets: 
+  - name: privateregsitry
+
+config:
+  - name: application-config
+    loadFile: application-dev.yml
+    mountPath: /application.yml
+
+serviceAccount:
+  create: false
+  name: "builder"
+service:
+  type: ClusterIP
+  port: 8080
+  targetPort: 8080
+
+route:
+  host: app.test.domain
+  path: /

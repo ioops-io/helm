@@ -1,0 +1,84 @@
+image:
+  repository: curlimages/curl
+  tag: latest
+  pullPolicy: Always
+
+containers:
+  - name: first
+    image:
+      repository: first
+    ports:
+        - containerPort: 8000
+
+
+  - name: second
+    image:
+      repository: second
+    ports:
+        - containerPort: 9000
+
+
+  - name: third
+    image:
+      repository: third
+    ports:
+        - containerPort: 10000
+    resources:
+      limits:
+        cpu: 10m
+        memory: 100Mi
+      requests:
+        cpu: 10m
+        memory: 100Mi
+    startupProbe:
+      failureThreshold: 100
+      httpGet:
+        path: /actuator/xxxx
+        port: 10000
+        scheme: HTTP
+      initialDelaySeconds: 600
+      periodSeconds: 30
+      successThreshold: 10
+      timeoutSeconds: 20
+
+#Global Resources, used unless defined in the container
+resources:
+  limits:
+    cpu: 2
+    memory: 2Gi
+  requests:
+    cpu: 100m
+    memory: 1Gi
+
+livenessProbe:
+  failureThreshold: 1
+  httpGet:
+    path: /actuator/health
+    port: 8081
+    scheme: HTTP
+  initialDelaySeconds: 30
+  periodSeconds: 8
+  successThreshold: 1
+  timeoutSeconds: 2
+
+readinessProbe:
+  failureThreshold: 1
+  httpGet:
+    path: /actuator/health
+    port: 8081
+    scheme: HTTP
+  initialDelaySeconds: 60
+  periodSeconds: 3
+  successThreshold: 1
+  timeoutSeconds: 2
+
+startupProbe:
+  failureThreshold: 1
+  httpGet:
+    path: /actuator/health
+    port: 8081
+    scheme: HTTP
+  initialDelaySeconds: 60
+  periodSeconds: 3
+  successThreshold: 1
+  timeoutSeconds: 2

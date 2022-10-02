@@ -1,0 +1,31 @@
+
+
+containers:
+  - name: first
+  - name: second
+
+
+persistence:
+
+  volumes: []
+    # - name: config
+    #   emptyDir: {}
+    # - name: host-file-tmp
+    #   hostPath:
+    #     path: /tmp/xteve
+    #     type: DirectoryOrCreate
+  mounts:
+    - name: data
+      mountPath: /data
+    # - mountPath: /config
+    #   name: config
+    #   readOnly: false
+    # - mountPath: /dev/shm
+    #   name: host-file-tmp
+  storage:
+    - name: data
+      type: pv
+      capacity: 10Gi
+      accessMode: ReadWriteOnce
+      storageClass: ssd
+      persistentVolumeReclaimPolicy: Retain

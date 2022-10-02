@@ -1,0 +1,33 @@
+{{- if and .Values.persistence .Values.persistence.storage }}
+{{- range .Values.persistence.storage }}
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: {{ include "ioops-template.name" $ }}-{{ .name }}
+  labels:
+    "app.kubernetes.io/name": '{{ $.Release.Name }}'
+    "app.kubernetes.io/managed-by": "{{ $.Release.Service }}"
+    "app.kubernetes.io/instance": "{{ $.Release.Name }}"
+spec:
+  accessModes:
+    - {{ .accessMode }}
+  resources:
+    requests:
+      storage: {{ .capacity }}
+
+{{- if eq .type "oc-nfs" }}
+{{- if not .existentPVName }}
+  volumeName: {{ include "ioops-template.name" $ }}-{{ .name }}
+{{- else }}
+  volumeName: {{ .existentPVName }}
+{{- end }}
+  storageClassName: ""
+{{- end }}
+
+{{- if eq .type "pvc" }}
+  volumeMode: Filesystem
+  storageClassName: {{ .storageClassName | default "" | quote }}
+{{- end }}
+---
+{{- end }}
+{{- end }}

@@ -1,0 +1,30 @@
+
+image:
+  repository: redis
+  tag: latest
+  pullPolicy: Always
+
+persistence:
+
+  volumes: []
+    # - name: config
+    #   emptyDir: {}
+    # - name: host-file-tmp
+    #   hostPath:
+    #     path: /tmp/xteve
+    #     type: DirectoryOrCreate
+  mounts:
+    - name: data
+      mountPath: /data
+    # - mountPath: /config
+    #   name: config
+    #   readOnly: false
+    # - mountPath: /dev/shm
+    #   name: host-file-tmp
+  storage:
+    - name: data
+      type: pvc
+      capacity: 10Gi
+      accessMode: ReadWriteOnce
+      persistentVolumeReclaimPolicy: Retain
+      storageClassName: oci

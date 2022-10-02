@@ -1,0 +1,12 @@
+image:
+  repository: curlimages/curl
+  tag: latest
+  pullPolicy: Always
+
+containers:
+  - name: first
+    image:
+      repository: registry/other-repository
+      tag: 1.0.0
+    ports:
+      - containerPort: 9000

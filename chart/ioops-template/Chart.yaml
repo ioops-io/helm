@@ -1,0 +1,6 @@
+apiVersion: v2
+name: ioops-template
+description: Default template Helm Chart
+type: application
+version: 1.0.0
+appVersion: 0.0.0

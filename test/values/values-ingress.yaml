@@ -1,0 +1,35 @@
+replicaCount: 1
+
+image:
+  repository: curlimages/curl
+  tag: latest
+  pullPolicy: Always
+
+imagePullSecrets: 
+  - name: privateregsitry
+
+serviceAccount:
+  create: false
+  name: "azure-devops-svc"
+
+service:
+  type: ClusterIP
+  port: 8080
+  targetPort: 8080
+
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/ingress.class: nginx
+  hosts:
+    - host: demo-app.com
+      paths: ["/"]
+
+vault:
+  enabled: true
+  type: hashicorp
+  role: demo-app-role
+  format: export
+  activeSync: true
+  secrets:
+    - app/dev/config

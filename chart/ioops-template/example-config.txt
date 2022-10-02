@@ -1,0 +1,10 @@
+This is an example config file
+This file should be existent inside helm template at the same 
+folder of Chart.yaml file.
+Simple copy file to this place and run helm using
+configuration like this:
+
+config:
+  - name: example-config.txt
+    loadFile: example-config.txt
+    [...]

@@ -1,0 +1,206 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ioops-template.fullname" . }}
+  labels:
+    {{- include "ioops-template.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+{{- if .Values.updateStrategy }}
+  strategy:
+{{ toYaml .Values.updateStrategy | indent 4 }}
+{{- end }}
+  selector:
+    matchLabels:
+      {{- include "ioops-template.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "ioops-template.selectorLabels" . | nindent 8 }}
+      annotations:
+        timestamp: "{{ date "20060102150405" now }}"
+
+{{- if .Values.vault }}
+
+{{- if and (eq .Values.vault.enabled true) (eq .Values.vault.type "hashicorp")  }}
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/agent-inject-default-template: "json"
+        vault.hashicorp.com/role: "{{ .Values.vault.role }}"
+        {{- if and (.Values.vault.activeSync) (eq .Values.vault.activeSync true)  }}
+        vault.hashicorp.com/agent-pre-populate-only: "false"
+        {{- else }}
+        vault.hashicorp.com/agent-pre-populate-only: "true"
+        {{- end }}
+        vault.hashicorp.com/agent-init-first: "true"
+        {{- $c := 0 | int }}
+        {{- range .Values.vault.secrets }}
+        {{- $c = add1 $c }}
+        vault.hashicorp.com/agent-inject-secret-{{ $c }}: "{{ . }}"
+
+        {{- if eq $.Values.vault.format "export"  }}
+        vault.hashicorp.com/agent-inject-template-{{ $c }}: |
+          {{`{{- with secret "`}}{{- . }}{{`" }}
+          {{- range $k, $v := .Data.data }}
+          export {{ $k }}={{ $v }}
+          {{- end }}
+          {{- end }}`}}
+        {{- end }}
+
+        {{- if eq $.Values.vault.format "keyvalue"  }}
+        vault.hashicorp.com/agent-inject-command-{{ $c }}: "cat /vault/secrets/{{ $c }} >> /vault/secrets/.env"
+        vault.hashicorp.com/agent-inject-template-{{ $c }}: |
+          {{`{{- with secret "`}}{{- . }}{{`" }}
+          {{- range $k, $v := .Data.data }}
+          {{ $k }}={{ $v }}
+          {{- end }}
+          {{- end }}`}}
+        {{- end }}
+
+        {{- end }}
+        
+{{- end }}
+
+{{- end }}
+
+{{- if .Values.annotations }}
+{{ toYaml .Values.podAnnotations | indent 8 }}
+{{- end }}
+    spec:
+    {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+
+      {{- $containerId := 0 | int }}
+      containers:
+      {{- range .Values.containers }}
+      {{- $containerId = add1 $containerId }}
+
+        - name: {{ .name }}
+          securityContext:
+            {{- if .securityContext }}
+            {{- toYaml .securityContext | nindent 12 }}
+            {{- else if $.Values.securityContext }}
+            {{- toYaml $.Values.securityContext | nindent 12 }}
+            {{- end }}
+
+          {{- $imageRepository := $.Values.image.repository }}
+          {{- $imageTag := $.Values.image.tag }}
+          {{- $imagePullPolicy := $.Values.image.pullPolicy }}
+          {{- if .image }}
+          image: "{{ .image.repository | default $imageRepository }}:{{ .image.tag | default $imageTag }}"
+          imagePullPolicy: {{ $imagePullPolicy }}
+          {{- else }}
+          image: "{{ $imageRepository }}:{{ $imageTag }}"
+          imagePullPolicy: {{ $imagePullPolicy }}
+          {{- end }}
+
+          env:
+          {{- with $.Values.env }}
+          {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .env }}
+          {{- toYaml . | nindent 12 }}
+          {{- end }}
+
+          {{- if .ports }}
+          ports:
+          {{ toYaml .ports | indent 2 }}
+          {{- end }}
+
+          {{- if .livenessProbe }}
+          livenessProbe:
+          {{- toYaml .livenessProbe | nindent 10 }}
+          {{- else if and (eq $containerId 1) ($.Values.livenessProbe) }}
+          livenessProbe:
+          {{- toYaml $.Values.livenessProbe | nindent 12 }}
+          {{- end }}
+
+          {{- if .readinessProbe }}
+          readinessProbe:
+          {{- toYaml .readinessProbe | nindent 10 }}
+          {{- else if and (eq $containerId 1) ($.Values.readinessProbe) }}
+          readinessProbe:
+          {{- toYaml $.Values.readinessProbe | nindent 12 }}
+          {{- end }}
+
+
+          {{- if .startupProbe }}
+          startupProbe:
+          {{- toYaml .startupProbe | nindent 10 }}
+          {{- else if and (eq $containerId 1) ($.Values.startupProbe) }}
+          startupProbe:
+          {{- toYaml $.Values.startupProbe | nindent 12 }}
+          {{- end }}
+
+          resources:
+            {{- if .resources }}
+            {{- toYaml .resources | nindent 12 }}
+            {{- else if $.Values.resources }}
+            {{- toYaml $.Values.resources | nindent 12 }}
+            {{- end }}
+
+          volumeMounts:
+
+            {{- if $.Values.config }}
+            {{- range $.Values.config }}
+            {{- if .mountPath }}
+            - name: {{ .name }}
+              mountPath: {{ .mountPath }}
+              subPath: {{ .name }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+
+            {{- if $.Values.persistence.mounts }}
+            {{- range $.Values.persistence.mounts }}
+            - name: {{ .name }}
+              mountPath: {{ .mountPath }}
+              {{- if .readOnly }}
+              readOnly: {{ .readOnly }}
+              {{- end }}
+            {{- end }}
+            {{- end }}
+
+      {{/* END OF Container template configuration */}}
+      {{- end }}
+
+
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    {{- with .Values.affinity }} 
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+
+      volumes:
+
+        {{- if .Values.config }}
+        {{- range .Values.config }}
+        - name: {{ .name }}
+          configMap:
+            name: {{ include "ioops-template.name" $ }}-{{ .name }}
+        {{- end }}
+        {{- end }}
+
+        {{- if .Values.persistence.volumes }}
+        {{ toYaml .Values.persistence.volumes | indent 8 }}
+        {{- end }}
+
+        {{- if and .Values.persistence .Values.persistence.storage }}
+        {{- range .Values.persistence.storage }}
+        - name: {{ .name }}
+          persistentVolumeClaim:
+            claimName: {{ include "ioops-template.name" $ }}-{{ .name }}
+        {{- end }}
+        {{- end }}
+
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}

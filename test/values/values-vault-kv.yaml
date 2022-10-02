@@ -1,0 +1,15 @@
+image:
+  repository: redis
+  tag: latest
+  pullPolicy: Always
+
+vault:
+  enabled: true
+  type: hashicorp
+  format: keyvalue
+  role: default-builder
+  secrets:
+    - dev/shared/services
+    - dev/br-whs-Documentations/laravel-example
+
+

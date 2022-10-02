@@ -1,0 +1,10 @@
+
+vault:
+  enabled: true
+  type: hashicorp
+  format: json
+  role: test-app-role
+  activeSync: false
+  secrets:
+    - dev/shared/services
+    - dev/vault-example/app

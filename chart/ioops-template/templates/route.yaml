@@ -1,0 +1,45 @@
+{{- if (.Values.route) -}}
+{{- $fullName := include "ioops-template.fullname" . -}}
+{{- $svcPort := .Values.service.port -}}
+kind: Route
+apiVersion: route.openshift.io/v1
+metadata:
+  name: {{ $fullName }}
+  labels:
+    {{- include "ioops-template.labels" . | nindent 4 }}
+  {{- with .Values.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  host: {{ .Values.route.host }}
+  path: {{ .Values.route.path }}
+  to:
+    kind: Service
+    name: {{ include "ioops-template.fullname" . }}
+  port:
+    targetPort: tcp-{{ .Values.service.port }}
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+{{- if (.Values.route.tls) -}}
+{{- with .Values.route.tls -}}
+
+{{- if (.keyFile) }}
+    key: |-
+{{ $.Files.Get .keyFile | indent 6}}
+{{- end }}
+
+{{- if (.certificateFile) }}
+    certificate: |-
+{{ $.Files.Get .certificateFile | indent 6}}
+{{- end }}
+
+{{- if (.caCertificateFile) }}
+    caCertificate: |-
+{{ $.Files.Get .caCertificateFile | indent 6}}
+{{- end }}
+
+{{- end }}
+{{- end }}
+{{- end }}

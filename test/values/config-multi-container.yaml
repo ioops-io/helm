@@ -1,0 +1,22 @@
+image:
+  repository: curlimages/curl
+  tag: latest
+  pullPolicy: Always
+
+containers:
+  - name: first
+    ports:
+        - containerPort: 8080
+  - name: second
+    image:
+      repository: server
+      tag: 6.5.1
+    ports:
+        - containerPort: 1234
+    env:
+      - name: "SECOND_ONLY_ENV"
+        value: "value-123"
+
+env:
+  - name: "GLOBAL_ENV"
+    value: "GLOBAL_VALUE"

@@ -1,0 +1,45 @@
+image:
+  repository: curlimages/curl
+  tag: latest
+  pullPolicy: Always
+
+resources:
+  limits:
+    cpu: 2
+    memory: 2Gi
+  requests:
+    cpu: 100m
+    memory: 1Gi
+
+livenessProbe:
+  failureThreshold: 1
+  httpGet:
+    path: /actuator/health
+    port: 8081
+    scheme: HTTP
+  initialDelaySeconds: 30
+  periodSeconds: 8
+  successThreshold: 1
+  timeoutSeconds: 2
+
+readinessProbe:
+  failureThreshold: 1
+  httpGet:
+    path: /actuator/health
+    port: 8081
+    scheme: HTTP
+  initialDelaySeconds: 60
+  periodSeconds: 3
+  successThreshold: 1
+  timeoutSeconds: 2
+
+startupProbe:
+  failureThreshold: 1
+  httpGet:
+    path: /actuator/health
+    port: 8081
+    scheme: HTTP
+  initialDelaySeconds: 60
+  periodSeconds: 3
+  successThreshold: 1
+  timeoutSeconds: 2
