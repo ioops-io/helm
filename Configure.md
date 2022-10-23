@@ -2,7 +2,17 @@
 
 Read **default values** ```helm show values path/to/template``` file for complete configuration guide.
 
-[[_TOC_]]
+- [Configure Helm Chart](#configure-helm-chart)
+  - [Main configuration section](#main-configuration-section)
+  - [ConfigMap configuration](#configmap-configuration)
+  - [Storage persistence](#storage-persistence)
+    - [Examples of NFS mount for Openshift](#examples-of-nfs-mount-for-openshift)
+  - [Vault integration](#vault-integration)
+    - [Configuring Hashcorp Vault](#configuring-hashcorp-vault)
+  - [Single container image and multiple container images](#single-container-image-and-multiple-container-images)
+  - [Environment Variables](#environment-variables)
+  - [Resources](#resources)
+    - [PDB - POD Disruption Budget](#pdb---pod-disruption-budget)
 
 ## Main configuration section
 
