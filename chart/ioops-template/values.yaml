@@ -3,6 +3,7 @@
 # Declare variables to be passed into your templates.
 
 #POD Replicas
+#If HPA is enabled replicaCount will respect minReplicas
 replicaCount: 1
 
 #Deploy override
@@ -12,6 +13,16 @@ fullnameOverride: ""
 #POD Image pull secrets
 imagePullSecrets:
   - name: container.registy.io
+
+#Custom Deployment selector labels
+labels: {}
+#
+#Assign PODs https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/
+#nodeSelector:
+  #Describe your nodeSelector
+
+#affinity:
+  #Describe your affinity
 
 #Globa image configuration
 #in case of ONE container configuration, this is how to retrieve container image.
@@ -33,8 +44,13 @@ image:
   tag: latest
   pullPolicy: Always
 
+default:
+  host: hostname-for-ingress-or-route.chart.default.fqdn
+  serviceAccountName: default
+  #servicePort: 8080 TODO - Configure service to use this default configuration
+  #timezone: UTC - TODO Configure timezone to use this default configuration
 
-#Global Vault configuration
+#Vault configuration
 # Example of vault section
 # vault:
 #   enabled: true
@@ -48,18 +64,19 @@ image:
 vault:
   enabled: false
   format: json
+  type: hashicorp
 
 #ConfigMap
 #Configure app based on either content of the file (data) or from file (loadFile) inside the 
 #helm chart template.
 config: {}
-  # - name: sample.properties
+  # - name: sample-properties
   #   mountPath: /app/sample.properties
   #   data: |-
   #     #Sample Properties file.
   #     FOO=bar
   #     VAR1=VALUE1
-  # - name: sample.xml
+  # - name: sample-xml
   #   mountPath: /app/sample-other-name.xml
   #   data: |-
   #     <note>
@@ -68,13 +85,13 @@ config: {}
   #       <heading>Reminder</heading>
   #       <body>Don't forget me this weekend!</body>
   #     </note>
-  # - name: sample.json
+  # - name: sample-json
   #   #mountPath: /app/sample.json #No mount for this example
   #   data: |-
   #     {
   #       "key": "value"
   #     }
-  # - name: sample.yaml
+  # - name: sample-yaml
   #   #mountPath: /app/sample.yaml #No mount for this example
   #   data: |-
   #     hello: world
@@ -88,7 +105,7 @@ config: {}
 # Deployment service account
 serviceAccount:
   create: false
-  name: "builder"
+  #name: "default" If not defined is using default.serviceAccountName
 
 #
 # Container definition
@@ -105,7 +122,7 @@ serviceAccount:
 # - volumeMounts
 #
 containers:
-  - name: skylab-app
+  - name: app
     image: {} # Default to global image
     env: [] #D efaul to global env
     ports:
@@ -119,6 +136,13 @@ resources: {}
   #   cpu: 100m
   #   memory: 1Gi
 
+#POD Disruption Budget
+#Define either minAvailable or maxUnavailable
+pdb:
+  enabled: false
+  # minAvailable: 2
+  # maxUnavailable: 1
+
 #
 # Defaults sections ONLY for first container (or single container configuration only)
 # Bellow sections: resources, livenessProbe, readinessProbe, startupProbe in values only applies
@@ -131,7 +155,7 @@ livenessProbe: {}
 #     path: /actuator/health
 #     port: 8081
 #     scheme: HTTP
-#   initialDelaySeconds: 30
+#   initialDelaySeconds: 5
 #   periodSeconds: 8
 #   successThreshold: 1
 #   timeoutSeconds: 2
@@ -142,7 +166,7 @@ readinessProbe: {}
   #   path: /actuator/health
   #   port: 8081
   #   scheme: HTTP
-  # initialDelaySeconds: 60
+  # initialDelaySeconds: 10
   # periodSeconds: 3
   # successThreshold: 1
   # timeoutSeconds: 2
@@ -178,19 +202,19 @@ affinity: {}
 updateStrategy:
   type: RollingUpdate
   rollingUpdate:
-    maxSurge: 1
-    maxUnavailable: 1
+    maxSurge: 25%
+    maxUnavailable: 25%
 
 service:
   type: ClusterIP
   port: 8080
-  targetPort: 8080
 
 #
 # Networking configuration section
 #
 
-# route:
+route: {}
+#   enabled: false
 #   host: chart.dev.domain.com
 #   path: /
 #   tls:
@@ -199,21 +223,14 @@ service:
 #     caCertificateFile: ca-certificate.pem #File must be exist at Helm's chart directory
 
 ingress: {}
-#   enabled: true
-#   annotations:
-#     nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
-#     kubernetes.io/ingress.class: "nginx"
-#   hosts:
-#     - host: api-global.solistica.com
-#       paths: [/]
-#       backend:
-#         serviceName: whs-app
-#         servicePort: 443
-
-#   tls:
-#     - hosts:
-#         - api-global.solistica.com
-#       secretName: star.solistica.com
+  # enabled: false
+  # annotations:
+  #   kubernetes.io/ingress.class: "nginx"
+  # hosts:
+  #   - host: wms-service.solistica.io
+  # tls:
+  #   enabled: true
+  #   secretName: star.domain.com
 
 
 #
@@ -278,17 +295,34 @@ persistence:
     #   remotePath: /shared
     #   persistentVolumeReclaimPolicy: Retain
 
-#Horizontal Pod Autoscaller
-# hpa:
-#   enabled: false
-#   maxReplicas: 2
-#   minReplicas: 1
-#   metrics:
-#     - resource: memory      #Options: memory (Resource), cpu (resource)
-#       type: AverageValue    #Options: Utilization, AverageValue, Value
-#       target: 500Mi         #Options: Value dependent on type
-#     - resource: memory
-#       type: AverageValue
-#       target: 500Mi
-#   behavior: {}              #Behavior full Spec
-#   behaviorPolicy:           #Pre-defined Behavior spec: Check documentation for options
+
+vpa:
+  enabled: false
+#  updateMode: "Off"   #Auto, Initial, Recreate or Off. Default is Off (just recomendations)
+
+hpa:
+  enabled: false
+  # maxReplicas: 3
+  # minReplicas: 1
+  # metrics:
+  #   - resource: memory      #Options: memory (Resource), cpu (resource)
+  #     type: Utilization    #Options: Utilization, averageValue, Value
+  #     target: 75         #Options: Value dependent on type
+  #   - resource: cpu
+  #     type: Utilization
+  #     target: 75
+
+  # behavior:
+  #   scaleDown:
+  #     stabilizationWindowSeconds: 60
+  #     policies:
+  #       - type: Pods
+  #         value: 1
+  #         periodSeconds: 60
+  #   scaleUp: 
+  #     policies:
+  #     - type: Pods
+  #       value: 1
+  #       periodSeconds: 90
+  #     selectPolicy: Max
+  #     stabilizationWindowSeconds: 120

@@ -8,5 +8,3 @@ vault:
   secrets:
     - dev/shared/services
     - dev/vault-example/app
-
-

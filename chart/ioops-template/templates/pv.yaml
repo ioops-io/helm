@@ -1,10 +1,12 @@
 {{- if and .Values.persistence .Values.persistence.storage }}
 {{- range .Values.persistence.storage }}
-{{- if and (ne .type "pvc") (not .existentPVName) }}
+{{- if and (ne .type "pvc") (ne .type "nfs-ganesha") (not .existentPVName) }}
 kind: PersistentVolume
 apiVersion: v1
 metadata:
-  name: {{ include "ioops-template.name" $ }}-{{ .name }}
+  name: {{ include "chart.name" $ }}-{{ .name }}
+  annotations:
+    "helm.sh/resource-policy": keep
   labels:
     "app.kubernetes.io/name": '{{ $.Release.Name }}'
     "app.kubernetes.io/managed-by": "{{ $.Release.Service }}"

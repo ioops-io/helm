@@ -1,0 +1,3 @@
+
+nodeSelector:
+    "eks.amazonaws.com/nodegroup": "myapp-group01"

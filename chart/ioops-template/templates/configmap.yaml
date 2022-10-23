@@ -3,7 +3,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "ioops-template.name" $ }}-{{ .name }}
+  name: {{ include "chart.name" $ }}-{{ .name }}
   labels:
     "app.kubernetes.io/name": '{{ $.Release.Name }}'
     "app.kubernetes.io/managed-by": "{{ $.Release.Service }}"

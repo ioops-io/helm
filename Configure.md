@@ -7,6 +7,7 @@ Read **default values** ```helm show values path/to/template``` file for complet
 ## Main configuration section
 
 ```yaml
+#If HPA is enabled replicaCount will respect minReplicas
 replicaCount: 1
 
 image:
@@ -17,8 +18,11 @@ image:
 imagePullSecrets:
   - name: secrets-name
 
-nameOverride: ""
-fullnameOverride: ""
+nameOverride: "my-app"
+fullnameOverride: "my-app-release"
+
+labels:
+ app: my-app
 ```
 
 Image pull secret should be configured prior in the namespace. Check official Kubernetes documentation [here](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/)
@@ -31,14 +35,14 @@ Example:
 
 ```yaml
 config:
-  - name: sample.properties
+  - name: sample-properties
     mountPath: /app/sample.properties
     data: |-
       #Sample Properties file.
       FOO=bar
       VAR1=VALUE1
 
-  - name: example-config.txt
+  - name: example-config-txt
     mountPath: /app/example-config.txt
     loadFile: example-config.txt
 ```
@@ -55,7 +59,7 @@ The default storage configuration section is:
 ```yaml
 persistence:
   volumes: []
-  mounts: []
+  mounts:  []
   storage: []
 ```
 
@@ -68,7 +72,8 @@ The implemented driver for storage are:
 | Type | Description |
 |---|---|
 | **oc-nfs** | Openshift NFS mount for containers. |
-| **pv** | Regular persistent volume. |
+| **pv** | Already existent persistent volume. |
+| **nfs-ganesha** | NFS-Ganesha [nfs-ganesha-server-and-external-provisioner](https://kubernetes-sigs.github.io/nfs-ganesha-server-and-external-provisioner/) |
 | **csi-nfs** | [Native CSI NFS](https://github.com/kubernetes-csi/csi-driver-nfs) mount for containers. **TBI** |
 | **csi-cifs** | [Native CSI CIFS](https://github.com/kubernetes-csi/csi-driver-smb) mount for containers. **TBI** |
 
@@ -335,3 +340,17 @@ env:
   - name: "GLOBAL_ENV"
     value: "GLOBAL_VALUE"
 ```
+
+## Resources
+
+### PDB - POD Disruption Budget
+
+Defaults (disabled). Enable and define either minAvailable or maxUnavailable.
+
+```yaml
+pdb:
+  enabled: false
+  maxUnavailable: 1
+  #minAvailable: 2
+```
+

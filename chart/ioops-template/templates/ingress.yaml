@@ -1,5 +1,5 @@
 {{- if .Values.ingress.enabled -}}
-{{- $fullName := include "ioops-template.fullname" . -}}
+{{- $fullName := include "chart.fullname" . -}}
 {{- $svcPort := .Values.service.port -}}
 {{- if semverCompare ">=1.14-0" .Capabilities.KubeVersion.GitVersion -}}
 apiVersion: networking.k8s.io/v1
@@ -10,35 +10,52 @@ kind: Ingress
 metadata:
   name: {{ $fullName }}
   labels:
-    {{- include "ioops-template.labels" . | nindent 4 }}
+    {{- include "chart.labels" . | nindent 4 }}
   {{- with .Values.ingress.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
-{{- if .Values.ingress.tls }}
+{{- if and (.Values.ingress.tls) (.Values.ingress.tls.enabled) (eq .Values.ingress.tls.enabled true) }}
   tls:
-  {{- range .Values.ingress.tls }}
     - hosts:
-      {{- range .hosts }}
-        - {{ . | quote }}
+      {{- if .Values.ingress.hosts }}
+      {{- range .Values.ingress.hosts }}
+        - {{ .host | quote }}
       {{- end }}
-      secretName: {{ .secretName }}
-  {{- end }}
+      {{- else }}
+        - {{ $.Values.default.host | quote }}
+      {{- end }}
+      secretName: {{ .Values.ingress.tls.secretName | default "" }}
 {{- end }}
   rules:
+  {{- if .Values.ingress.hosts }}
   {{- range .Values.ingress.hosts }}
+    {{- $port := .port | default $svcPort }}
     - host: {{ .host | quote }}
       http:
         paths:
-        {{- range .paths }}
+        {{- $defaultPath := list "/" -}}
+        {{- range .paths | default $defaultPath }}
           - path: {{ . }}
             pathType: Prefix
             backend:
               service:
                 name: {{ $fullName }}
                 port:
-                  number: {{ $svcPort }}
+                  number: {{ $port }}
         {{- end }}
+  {{- end }}
+  {{- else }}
+    - host: {{ $.Values.default.host | quote }}
+      http:
+        paths:
+          - path: "/"
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $fullName }}
+                port:
+                  number: {{ $svcPort }}
   {{- end }}
 {{- end }}

@@ -1,12 +1,12 @@
-{{- if (.Values.route) -}}
-{{- $fullName := include "ioops-template.fullname" . -}}
+{{- if .Values.route.enabled -}}
+{{- $fullName := include "chart.fullname" . -}}
 {{- $svcPort := .Values.service.port -}}
 kind: Route
 apiVersion: route.openshift.io/v1
 metadata:
   name: {{ $fullName }}
   labels:
-    {{- include "ioops-template.labels" . | nindent 4 }}
+    {{- include "chart.labels" . | nindent 4 }}
   {{- with .Values.ingress.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
@@ -16,7 +16,7 @@ spec:
   path: {{ .Values.route.path }}
   to:
     kind: Service
-    name: {{ include "ioops-template.fullname" . }}
+    name: {{ include "chart.fullname" . }}
   port:
     targetPort: tcp-{{ .Values.service.port }}
   tls:

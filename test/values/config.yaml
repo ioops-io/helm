@@ -1,0 +1,5 @@
+
+config:
+  - name: frontend-config
+    loadFile: config-qa.json
+    mountPath: /var/www/app.json

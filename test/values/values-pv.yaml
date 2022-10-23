@@ -1,9 +1,7 @@
 
-
 containers:
   - name: first
   - name: second
-
 
 persistence:
 

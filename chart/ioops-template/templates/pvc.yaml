@@ -3,11 +3,13 @@
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
-  name: {{ include "ioops-template.name" $ }}-{{ .name }}
+  name: {{ include "chart.name" $ }}-{{ .name }}
   labels:
     "app.kubernetes.io/name": '{{ $.Release.Name }}'
     "app.kubernetes.io/managed-by": "{{ $.Release.Service }}"
     "app.kubernetes.io/instance": "{{ $.Release.Name }}"
+  annotations:
+    "helm.sh/resource-policy": keep
 spec:
   accessModes:
     - {{ .accessMode }}
@@ -17,7 +19,7 @@ spec:
 
 {{- if eq .type "oc-nfs" }}
 {{- if not .existentPVName }}
-  volumeName: {{ include "ioops-template.name" $ }}-{{ .name }}
+  volumeName: {{ include "chart.name" $ }}-{{ .name }}
 {{- else }}
   volumeName: {{ .existentPVName }}
 {{- end }}
@@ -27,6 +29,10 @@ spec:
 {{- if eq .type "pvc" }}
   volumeMode: Filesystem
   storageClassName: {{ .storageClassName | default "" | quote }}
+{{- end }}
+
+{{- if eq .type "nfs-ganesha" }}
+  storageClassName: {{ .storageClassName | default "nfs" | quote }}
 {{- end }}
 ---
 {{- end }}

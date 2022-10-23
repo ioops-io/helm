@@ -1,0 +1,4 @@
+
+vpa:
+  enabled: true
+  updateMode: "Off"   #Auto, Initial, Recreate or Off. Default is Off (just recomendations)

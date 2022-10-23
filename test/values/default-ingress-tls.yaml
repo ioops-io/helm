@@ -1,0 +1,9 @@
+default:
+  host: test-host.fqdn
+
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/ingress.class: nginx
+  tls:
+    enabled: true

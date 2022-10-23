@@ -1,22 +1,26 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "ioops-template.fullname" . }}
+  name: {{ include "chart.fullname" . }}
   labels:
-    {{- include "ioops-template.labels" . | nindent 4 }}
+    {{- include "chart.labels" . | nindent 4 }}
 spec:
+  {{- if and (.Values.hpa) (.Values.hpa.enabled) }}
+  replicas: {{ .Values.hpa.minReplicas | default 1 }}
+  {{- else }}
   replicas: {{ .Values.replicaCount }}
+  {{- end }}
 {{- if .Values.updateStrategy }}
   strategy:
 {{ toYaml .Values.updateStrategy | indent 4 }}
 {{- end }}
   selector:
     matchLabels:
-      {{- include "ioops-template.selectorLabels" . | nindent 6 }}
+      {{- include "chart.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "ioops-template.selectorLabels" . | nindent 8 }}
+        {{- include "chart.selectorLabels" . | nindent 8 }}
       annotations:
         timestamp: "{{ date "20060102150405" now }}"
 
@@ -184,7 +188,7 @@ spec:
         {{- range .Values.config }}
         - name: {{ .name }}
           configMap:
-            name: {{ include "ioops-template.name" $ }}-{{ .name }}
+            name: {{ include "chart.name" $ }}-{{ .name }}
         {{- end }}
         {{- end }}
 
@@ -196,7 +200,7 @@ spec:
         {{- range .Values.persistence.storage }}
         - name: {{ .name }}
           persistentVolumeClaim:
-            claimName: {{ include "ioops-template.name" $ }}-{{ .name }}
+            claimName: {{ include "chart.name" $ }}-{{ .name }}
         {{- end }}
         {{- end }}
 

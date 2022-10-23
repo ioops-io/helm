@@ -1,0 +1,4 @@
+route:
+  enabled: true
+  host: app.test.domain
+  path: /

@@ -1,0 +1,5 @@
+default:
+  host: test-host.fqdn
+
+route:
+  enabled: true

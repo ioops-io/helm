@@ -2,26 +2,14 @@
 
 containers:
   - name: first
-  - name: second
 
 
 persistence:
 
-  volumes: []
-    # - name: config
-    #   emptyDir: {}
-    # - name: host-file-tmp
-    #   hostPath:
-    #     path: /tmp/xteve
-    #     type: DirectoryOrCreate
   mounts:
     - name: my-nfs
       mountPath: /mnt/nfs-server
-    # - mountPath: /config
-    #   name: config
-    #   readOnly: false
-    # - mountPath: /dev/shm
-    #   name: host-file-tmp
+
   storage:
     - name: my-nfs
       type: oc-nfs

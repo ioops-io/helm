@@ -1,0 +1,36 @@
+{{- if .Values.hpa.enabled -}}
+{{- $fullName := include "chart.fullname" . -}}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ $fullName }}
+  labels:
+    {{- include "chart.labels" . | nindent 4 }}
+spec:
+  maxReplicas: {{ .Values.hpa.maxReplicas }}
+  minReplicas: {{ .Values.hpa.minReplicas }}
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "chart.fullname" . }}
+  metrics:
+  {{- range .Values.hpa.metrics }}
+    {{- if or (eq .resource "cpu")  (eq .resource "memory") }}
+    - type: Resource
+      resource:
+        name: {{ .resource }}
+        target: 
+          type: {{ .type }}
+          {{- if eq .type "AverageValue" }}
+          averageValue: {{ .target }}
+          {{- else if eq .type "Utilization" }}
+          averageUtilization: {{ .target }}
+          {{- end }}
+    {{- end }}
+  {{- end }}
+  {{- if .Values.hpa.behavior }}
+  behavior:
+    {{- toYaml .Values.hpa.behavior | nindent 4 }}
+  {{- end }}
+
+{{- end }}
