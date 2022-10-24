@@ -4,6 +4,7 @@ Read **default values** ```helm show values path/to/template``` file for complet
 
 - [Configure Helm Chart](#configure-helm-chart)
   - [Main configuration section](#main-configuration-section)
+  - [Default section](#default-section)
   - [ConfigMap configuration](#configmap-configuration)
   - [Storage persistence](#storage-persistence)
     - [Examples of NFS mount for Openshift](#examples-of-nfs-mount-for-openshift)
@@ -36,6 +37,32 @@ labels:
 ```
 
 Image pull secret should be configured prior in the namespace. Check official Kubernetes documentation [here](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/)
+
+
+## Default section
+
+```yaml
+default:
+  host: hostname-for-ingress-or-route.chart.default.fqdn
+  serviceAccountName: default
+  enabledContainers: "*"
+  disabledContainers: null
+```
+
+| **Default** | **Usage** | **Notes** |
+|---|---|---|
+| host | Set host in ingress and route. | Only required if you do not specify ```hosts``` section in Ingress. |
+| serviceAccountName | Service account name. | Default value is ```default``` |
+| enabledContainers | Enable containers defined in ```containers``` section.  | Default is all (*) enabled. Separate list by : or , |
+| disabledContainers | Disable containers defined in ```containers``` section. | Default is none (null) disabled. Separate list by : or , |
+
+**Example:**
+
+```bash
+helm install my-release chart/name \
+  --set default.enabledContainers=first:second
+  --set default.host=my-release.fqdn 
+```
 
 ## ConfigMap configuration
 

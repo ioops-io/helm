@@ -74,7 +74,7 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
     {{- end }}
-      serviceAccountName: {{ .Values.serviceAccount.name }}
+      serviceAccountName: {{ .Values.serviceAccount.name | default .Values.default.serviceAccountName }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
 
@@ -82,6 +82,56 @@ spec:
       containers:
       {{- range .Values.containers }}
       {{- $containerId = add1 $containerId }}
+
+
+      {{- $containerEnabled := false }}
+      {{- $containerName := .name }}
+
+      {{/* Check if container is enabled */}}
+      {{- if and ($.Values.default.enabledContainers) (or (eq $.Values.default.enabledContainers .name) (eq $.Values.default.enabledContainers "*")) }}
+        {{- $containerEnabled = true }}
+      {{- else if contains ":" $.Values.default.enabledContainers }}
+        {{- $defined := false }}
+        {{- range regexSplit ":" $.Values.default.enabledContainers -1 }}
+          {{- if and (eq $containerName .) (not $defined) }}
+          {{- $defined = true }}
+          {{- $containerEnabled = true }}
+          {{- end }}
+        {{- end }}
+      {{- else if contains "," $.Values.default.enabledContainers }}
+        {{- $defined := false }}
+        {{- range regexSplit "," $.Values.default.enabledContainers -1 }}
+        {{- if and (eq $containerName .) (not $defined) }}
+          {{- $defined = true }}
+          {{- $containerEnabled = true }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
+
+      {{/* Check if container is disabled */}}
+      {{- if $.Values.default.disabledContainers }}
+        {{- if eq $.Values.default.disabledContainers $containerName }}
+          {{- $containerEnabled = false }}
+        {{- else if contains ":" $.Values.default.disabledContainers }}
+          {{- $defined := false }}
+          {{- range regexSplit ":" $.Values.default.disabledContainers -1 }}
+            {{- if and (eq $containerName .) (not $defined) }}
+            {{- $defined = true }}
+            {{- $containerEnabled = false }}
+            {{- end }}
+          {{- end }}
+        {{- else if contains "," $.Values.default.disabledContainers }}
+          {{- $defined := false }}
+          {{- range regexSplit "," $.Values.default.disabledContainers -1 }}
+          {{- if and (eq $containerName .) (not $defined) }}
+            {{- $defined = true }}
+            {{- $containerEnabled = false }}
+            {{- end }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
+
+      {{- if $containerEnabled }}
 
         - name: {{ .name }}
           securityContext:
@@ -131,7 +181,6 @@ spec:
           {{- toYaml $.Values.readinessProbe | nindent 12 }}
           {{- end }}
 
-
           {{- if .startupProbe }}
           startupProbe:
           {{- toYaml .startupProbe | nindent 10 }}
@@ -148,7 +197,6 @@ spec:
             {{- end }}
 
           volumeMounts:
-
             {{- if $.Values.config }}
             {{- range $.Values.config }}
             {{- if .mountPath }}
@@ -169,21 +217,25 @@ spec:
             {{- end }}
             {{- end }}
 
+            {{- if .volumeMounts }}
+            {{- toYaml .volumeMounts | nindent 12 }} 
+            {{- end }}
+
+      {{- end }}
       {{/* END OF Container template configuration */}}
       {{- end }}
-
 
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-    {{- with .Values.affinity }} 
+
+      {{- with .Values.affinity }} 
       affinity:
         {{- toYaml . | nindent 8 }}
-    {{- end }}
+      {{- end }}
 
       volumes:
-
         {{- if .Values.config }}
         {{- range .Values.config }}
         - name: {{ .name }}
@@ -193,7 +245,7 @@ spec:
         {{- end }}
 
         {{- if .Values.persistence.volumes }}
-        {{ toYaml .Values.persistence.volumes | indent 8 }}
+        {{ toYaml .Values.persistence.volumes | nindent 8 }}
         {{- end }}
 
         {{- if and .Values.persistence .Values.persistence.storage }}

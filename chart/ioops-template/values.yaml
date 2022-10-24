@@ -47,6 +47,8 @@ image:
 default:
   host: hostname-for-ingress-or-route.chart.default.fqdn
   serviceAccountName: default
+  enabledContainers: "*"
+  disabledContainers: null
   #servicePort: 8080 TODO - Configure service to use this default configuration
   #timezone: UTC - TODO Configure timezone to use this default configuration
 
@@ -122,9 +124,9 @@ serviceAccount:
 # - volumeMounts
 #
 containers:
-  - name: app
+  - name:  app
     image: {} # Default to global image
-    env: [] #D efaul to global env
+    env:   [] # Defaul to global env
     ports:
       - containerPort: 8080 # Default tcp/8080 Single container port
 
