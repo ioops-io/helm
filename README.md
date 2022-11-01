@@ -5,6 +5,7 @@
 | Template name | Description | Values.yml tips |
 |---|---|---|
 | ioops-template | Main template | [Configure](Configure.md) |
+| ioops-job | Job only template | |
 
 ## Test templates
 

@@ -1,0 +1,22 @@
+{{- if .Values.config }}
+{{- range .Values.config }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "chart.name" $ }}-{{ .name }}
+  labels:
+    "app.kubernetes.io/name": '{{ $.Release.Name }}'
+    "app.kubernetes.io/managed-by": "{{ $.Release.Service }}"
+    "app.kubernetes.io/instance": "{{ $.Release.Name }}"
+data:
+  {{ if .data }}
+  {{ .name }}: |-
+    {{- .data | nindent 4 }}
+  {{ else if .loadFile }}
+  {{ .name }}: |-
+{{ $.Files.Get .loadFile | indent 4}}
+  {{ end }}
+
+---  
+{{- end }}
+{{- end }}

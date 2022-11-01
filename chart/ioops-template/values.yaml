@@ -49,6 +49,9 @@ default:
   serviceAccountName: default
   enabledContainers: "*"
   disabledContainers: null
+  #enabledJobs: "*"
+  #disabledJobs: null
+
   #servicePort: 8080 TODO - Configure service to use this default configuration
   #timezone: UTC - TODO Configure timezone to use this default configuration
 
@@ -129,6 +132,21 @@ containers:
     env:   [] # Defaul to global env
     ports:
       - containerPort: 8080 # Default tcp/8080 Single container port
+
+#
+# Run Kubernetes Jobs
+#
+# Jobs are not enabled by default
+# jobs:
+#   - name:  job
+#     backoffLimit: 1
+#     restartPolicy: Never
+#     activeDeadlineSeconds: 100
+#     #command: ["perl",  "-Mbignum=bpi", "-wle", "print bpi(2000)"]
+#     command: ["perl"]
+#     args: ["TestApp.Cli.dll", "migrate-database"]
+#     image: {} # Default to global image
+#     env:   [] # Defaul to global env
 
 resources: {}
   # limits:
@@ -300,7 +318,7 @@ persistence:
 
 vpa:
   enabled: false
-#  updateMode: "Off"   #Auto, Initial, Recreate or Off. Default is Off (just recomendations)
+  updateMode: "Off"   #Auto, Initial, Recreate or Off. Default is Off (just recomendations)
 
 hpa:
   enabled: false

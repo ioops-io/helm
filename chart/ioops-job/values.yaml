@@ -1,0 +1,169 @@
+# Default values for chart.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+#Deploy override
+nameOverride: ""
+fullnameOverride: ""
+
+#POD Image pull secrets
+imagePullSecrets:
+  - name: container.registy.io
+
+image:
+  repository: container.registy.io/project/image
+  tag: latest
+  pullPolicy: Always
+
+default:
+  serviceAccountName: default
+  enabledContainers: "*"
+  disabledContainers: null
+  #enabledJobs: "*"
+  #disabledJobs: null
+
+#Vault configuration
+# Example of vault section
+# vault:
+#   enabled: true
+#   type: hashicorp
+#   role: test-app-role #Hashcorp Kubernetes's role
+#   format: keyvalue #Fomat of rendered secrets: keyvalue, export or json 
+#   activeSync: false #true to keep secrets in sync. Default to false
+#   secrets:
+#     - store/path/to/secret1
+#     - store/path/to/secret2 #Path to additional secrets
+vault:
+  enabled: false
+  format: json
+  type: hashicorp
+
+#ConfigMap
+#Configure app based on either content of the file (data) or from file (loadFile) inside the 
+#helm chart template.
+config: {}
+  # - name: sample-properties
+  #   mountPath: /app/sample.properties
+  #   data: |-
+  #     #Sample Properties file.
+  #     FOO=bar
+  #     VAR1=VALUE1
+  # - name: sample-xml
+  #   mountPath: /app/sample-other-name.xml
+  #   data: |-
+  #     <note>
+  #       <to>Tove</to>
+  #       <from>Jani</from>
+  #       <heading>Reminder</heading>
+  #       <body>Don't forget me this weekend!</body>
+  #     </note>
+  # - name: sample-json
+  #   #mountPath: /app/sample.json #No mount for this example
+  #   data: |-
+  #     {
+  #       "key": "value"
+  #     }
+  # - name: sample-yaml
+  #   #mountPath: /app/sample.yaml #No mount for this example
+  #   data: |-
+  #     hello: world
+  #     planets:
+  #       - earth
+  #       - mars
+  # - name: example-config.txt
+  #   mountPath: /app/example-config.txt
+  #   loadFile: example-config.txt
+
+# Deployment service account
+serviceAccount:
+  create: false
+  #name: "default" If not defined is using default.serviceAccountName
+
+#
+# Run Kubernetes Jobs
+#
+# Jobs are not enabled by default
+# jobs:
+#   - name:  job
+#     backoffLimit: 1
+#     restartPolicy: Never
+#     activeDeadlineSeconds: 100
+#     #command: ["perl",  "-Mbignum=bpi", "-wle", "print bpi(2000)"]
+#     command: ["perl"]
+#     args: ["TestApp.Cli.dll", "migrate-database"]
+#     image: {} # Default to global image
+#     env:   [] # Defaul to global env
+
+resources: {}
+  # limits:
+  #   cpu: 2
+  #   memory: 2Gi
+  # requests:
+  #   cpu: 100m
+  #   memory: 1Gi
+
+#
+# POD Relative configuration sections
+#
+
+podSecurityContext: {}
+
+securityContext: {}
+
+annotations: {}
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+
+#
+# Global environment
+#
+
+# Adding env section to the root of YALM makes it replicated to 
+# all containers. Each container can have their env section also.
+
+# Example of global env:
+#env:
+  # - name: SPRING_REDIS_HOST
+  #   valueFrom:
+  #     configMapKeyRef:
+  #       name: chart-config
+  #       key: spring.redis.host
+env: []
+
+#
+# POD Persistence
+#
+
+persistence:
+  volumes: []
+    # - name: config
+    #   emptyDir: {}
+    # - name: host-file-tmp
+    #   hostPath:
+    #     path: /tmp/xteve
+    #     type: DirectoryOrCreate
+
+  mounts: []
+    # - name: my-nfs
+    #   mountPath: /mnt/nfs-server
+    # - name: config
+    #   mountPath: /config
+    #   readOnly: false
+    # - name: host-file-tmp
+    #   mountPath: /dev/shm
+      
+  storage: []
+    # - name: my-nfs
+    #   type: oc-nfs
+    #   #existentPVName: pwb-nfs-server
+    #   capacity: 10Gi
+    #   accessMode: ReadWriteOnce
+    #   server: 10.10.10.2
+    #   remotePath: /shared
+    #   persistentVolumeReclaimPolicy: Retain
+

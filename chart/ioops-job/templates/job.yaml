@@ -1,0 +1,154 @@
+{{- if .Values.jobs }}
+{{- range .Values.jobs }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .name }}
+  labels:
+    "app.kubernetes.io/name": '{{ $.Release.Name }}'
+    "app.kubernetes.io/managed-by": "{{ $.Release.Service }}"
+    "app.kubernetes.io/instance": "{{ $.Release.Name }}"
+spec:
+  backoffLimit: {{ .backoffLimit | default 1 }}
+  activeDeadlineSeconds: {{ .activeDeadlineSeconds | default 100 }}
+
+  template:
+    metadata:
+      annotations:
+        timestamp: "{{ date "20060102150405" now }}"
+
+        {{- if $.Values.vault }}
+        {{- if and (eq $.Values.vault.enabled true) (eq $.Values.vault.type "hashicorp")  }}
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/agent-inject-default-template: "json"
+        vault.hashicorp.com/role: "{{ .Values.vault.role }}"
+        {{- if and ($.Values.vault.activeSync) (eq $.Values.vault.activeSync true)  }}
+        vault.hashicorp.com/agent-pre-populate-only: "false"
+        {{- else }}
+        vault.hashicorp.com/agent-pre-populate-only: "true"
+        {{- end }}
+        vault.hashicorp.com/agent-init-first: "true"
+        {{- $c := 0 | int }}
+        {{- range $.Values.vault.secrets }}
+        {{- $c = add1 $c }}
+        vault.hashicorp.com/agent-inject-secret-{{ $c }}: "{{ . }}"
+
+        {{- if eq $.Values.vault.format "export"  }}
+        vault.hashicorp.com/agent-inject-template-{{ $c }}: |
+          {{`{{- with secret "`}}{{- . }}{{`" }}
+          {{- range $k, $v := .Data.data }}
+          export {{ $k }}={{ $v }}
+          {{- end }}
+          {{- end }}`}}
+        {{- end }}
+
+        {{- if eq $.Values.vault.format "keyvalue"  }}
+        vault.hashicorp.com/agent-inject-command-{{ $c }}: "cat /vault/secrets/{{ $c }} >> /vault/secrets/.env"
+        vault.hashicorp.com/agent-inject-template-{{ $c }}: |
+          {{`{{- with secret "`}}{{- . }}{{`" }}
+          {{- range $k, $v := .Data.data }}
+          {{ $k }}={{ $v }}
+          {{- end }}
+          {{- end }}`}}
+        {{- end }}
+
+        {{- end }}
+        {{- end }}
+        {{- end }}
+
+
+    spec:
+      containers:
+        - name: {{ .name }}
+          securityContext:
+            {{- if .securityContext }}
+            {{- toYaml .securityContext | nindent 12 }}
+            {{- else if $.Values.securityContext }}
+            {{- toYaml $.Values.securityContext | nindent 12 }}
+            {{- end }}
+
+          {{- $imageRepository := $.Values.image.repository }}
+          {{- $imageTag := $.Values.image.tag }}
+          {{- $imagePullPolicy := $.Values.image.pullPolicy }}
+          {{- if .image }}
+          image: "{{ .image.repository | default $imageRepository }}:{{ .image.tag | default $imageTag }}"
+          imagePullPolicy: {{ $imagePullPolicy }}
+          {{- else }}
+          image: "{{ $imageRepository }}:{{ $imageTag }}"
+          imagePullPolicy: {{ $imagePullPolicy }}
+          {{- end }}
+
+          {{- if .command }}
+          command:
+            {{- toYaml .command | nindent 12 }}
+          {{- end }}
+
+          {{- if .args }}
+          args:
+            {{- toYaml .args | nindent 12 }}
+          {{- end }}
+
+          env:
+          {{- with $.Values.env }}
+          {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .env }}
+          {{- toYaml . | nindent 12 }}
+          {{- end }}
+
+          resources:
+            {{- if .resources }}
+            {{- toYaml .resources | nindent 12 }}
+            {{- else if $.Values.resources }}
+            {{- toYaml $.Values.resources | nindent 12 }}
+            {{- end }}
+
+          volumeMounts:
+            {{- if $.Values.config }}
+            {{- range $.Values.config }}
+            {{- if .mountPath }}
+            - name: {{ .name }}
+              mountPath: {{ .mountPath }}
+              subPath: {{ .name }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+
+            {{- if $.Values.persistence.mounts }}
+            {{- range $.Values.persistence.mounts }}
+            - name: {{ .name }}
+              mountPath: {{ .mountPath }}
+              {{- if .readOnly }}
+              readOnly: {{ .readOnly }}
+              {{- end }}
+            {{- end }}
+            {{- end }}
+
+            {{- if .volumeMounts }}
+            {{- toYaml .volumeMounts | nindent 12 }} 
+            {{- end }}
+
+      volumes:
+        {{- if $.Values.config }}
+        {{- range $.Values.config }}
+        - name: {{ .name }}
+          configMap:
+            name: {{ include "chart.name" $ }}-{{ .name }}
+        {{- end }}
+        {{- end }}
+
+        {{- if $.Values.persistence.volumes }}
+        {{ toYaml $.Values.persistence.volumes | nindent 8 }}
+        {{- end }}
+
+        {{- if and $.Values.persistence $.Values.persistence.storage }}
+        {{- range $.Values.persistence.storage }}
+        - name: {{ .name }}
+          persistentVolumeClaim:
+            claimName: {{ include "chart.name" $ }}-{{ .name }}
+        {{- end }}
+        {{- end }}   
+
+---  
+{{- end }}
+{{- end }}
