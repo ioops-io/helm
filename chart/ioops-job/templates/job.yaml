@@ -11,7 +11,6 @@ metadata:
 spec:
   backoffLimit: {{ .backoffLimit | default 1 }}
   activeDeadlineSeconds: {{ .activeDeadlineSeconds | default 100 }}
-
   template:
     metadata:
       annotations:
@@ -58,6 +57,11 @@ spec:
 
 
     spec:
+      restartPolicy: {{ .restartPolicy }}
+    {{- with $.Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
       containers:
         - name: {{ .name }}
           securityContext:

@@ -152,6 +152,10 @@ spec:
           imagePullPolicy: {{ $imagePullPolicy }}
           {{- end }}
 
+          {{- if .command }}
+          command:
+            {{- toYaml .command | nindent 12 }}
+          {{- end }}
           
           {{- if .args }}
           args:

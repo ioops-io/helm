@@ -1,5 +1,5 @@
 apiVersion: v2
-name: ioops-template
+name: ioops-job
 description: Default template Helm Chart for Jobs only
 type: application
 version: 1.0.0
