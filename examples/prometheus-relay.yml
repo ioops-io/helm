@@ -1,0 +1,30 @@
+replicaCount: 1
+
+containers:
+  - name: prometheus
+    image: 
+      repository: prom/prometheus
+      tag: latest
+      pullPolicy: Always
+    ports:
+      - containerPort: 9090
+
+service:
+  ports:
+    - port: 80
+      targetPort: 9090
+
+config:
+  - name: prometheus-yml
+    mountPath: /etc/prometheus/prometheus.yml
+    data: |
+      remote_write:   
+        - url: "<metrics ingestion endpoint for your Azure Monitor workspace>"
+          azuread:
+            cloud: 'AzurePublic'
+            managed_identity:
+              client_id: "<client-id of the managed identity>"
+            oauth:
+              client_id: "<client-id from the Entra app>"
+              client_secret: "<client secret from the Entra app>"
+              tenant_id: "<Azure subscription tenant Id>"

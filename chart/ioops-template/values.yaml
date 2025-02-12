@@ -11,8 +11,8 @@ nameOverride: ""
 fullnameOverride: ""
 
 #POD Image pull secrets
-imagePullSecrets:
-  - name: container.registy.io
+# imagePullSecrets:
+#   - name: container.registy.io
 
 #Custom Deployment selector labels
 labels: {}
